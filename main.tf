@@ -5,11 +5,10 @@ variable "cat_file" {
   type        = string
 }
 
-resource "local_file" "cat_message" {
-  content  = templatefile(var.cat_file, {})
-  filename = "cat_message.txt"
+data "local_file" "cat_content" {
+  filename = var.cat_file
 }
 
 output "cat_says" {
-  value = "cat says:\n${local_file.cat_message.content}"
+  value = "cat says:\n${data.local_file.cat_content.content}"
 }
