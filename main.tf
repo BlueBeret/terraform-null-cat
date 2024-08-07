@@ -1,31 +1,15 @@
 provider "local" {}
 
-variable "artifact_content" {
-  description = "Content to be written to the artifact file"
+variable "cat_file" {
+  description = "Path to the file containing the cat's message"
   type        = string
-  default     = "This is an artifact created by Terraform"
 }
 
-resource "null_resource" "example" {
-  provisioner "local-exec" {
-    command = "echo '${var.artifact_content}' > artifact.txt"
-  }
+resource "local_file" "cat_message" {
+  content  = templatefile(var.cat_file, {})
+  filename = "cat_message.txt"
 }
 
-resource "local_file" "artifact" {
-  content  = var.artifact_content
-  filename = "${path.module}/artifact.txt"
-}
-
-output "cat_ghost" {
-  value = "Ghost meawed successfully!"
-}
-
-
-output "cat_is_not_ghost" {
-  value = "Ghost meawed successfully!"
-}
-
-output "artifact_content" {
-  value = local_file.artifact.content
+output "cat_says" {
+  value = "cat says:\n${local_file.cat_message.content}"
 }
