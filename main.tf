@@ -13,6 +13,11 @@ output "cat_says" {
   value = "cat says:\n${data.local_file.cat_content.content}"
 }
 
+variable "cat_file2" {
+  description = "updating this because I am working"
+  type        = number
+}
+
 
 output "ghost" {
   value = "your password is: ..."
