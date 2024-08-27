@@ -12,3 +12,9 @@ data "local_file" "cat_content" {
 output "cat_says" {
   value = "cat says:\n${data.local_file.cat_content.content}"
 }
+
+
+output "ghost" {
+  value = "your password is: ..."
+}
+
