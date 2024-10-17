@@ -5,11 +5,6 @@ variable "cat_file" {
   description = "Name of the file containing the cat's message (no /)"
   type        = string
   default     = "cat_file.txt"
-
-  validation {
-    condition     = !contains(var.cat_file, "/") && !contains(var.cat_file, "\\")
-    error_message = "The file name must not contain '/' or '\\'. Only the file name without any directory structure is allowed."
-  }
 }
 
 # Variable for the file content
