@@ -1,163 +1,132 @@
 terraform {
-  required_version = ">= 0.12"
+  required_version = ">= 1.0.0"
 }
 
 locals {
-  cat_names = [
-    "Whiskerina",
-    "Floppa",
-    "Ballerina Cappuccina",
-    "Tung Tung Tung Sahur",
-    "Bombardiro Crocodilo",
-    "Tralalero Tralala"
+  environments = ["dev", "stage", "prod"]
+  services     = ["api", "db", "cache"]
+  flags        = { enable_extra = true, enable_alt = false }
+
+  matrix = flatten([
+    for env in local.environments : [
+      for svc in local.services : {
+        id  = "${env}-${svc}"
+        env = env
+        svc = svc
+      }
+    ]
+  ])
+}
+
+########################################
+# Static resources
+########################################
+
+resource "null_resource" "always_1" {
+  triggers = {
+    name = "always_1"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Static always_1"
+  }
+}
+
+resource "null_resource" "always_2" {
+  triggers = {
+    name = "always_2"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Static always_2"
+  }
+
+  depends_on = [null_resource.always_1]
+}
+
+########################################
+# Count-based dynamic block
+########################################
+
+resource "null_resource" "count_based" {
+  count = length(local.environments)
+
+  triggers = {
+    env = local.environments[count.index]
+  }
+
+  provisioner "local-exec" {
+    command = "echo Environment = ${self.triggers.env}"
+  }
+}
+
+########################################
+# for_each with map
+########################################
+
+resource "null_resource" "foreach_service" {
+  for_each = toset(local.services)
+
+  triggers = {
+    service = each.key
+  }
+
+  provisioner "local-exec" {
+    command = "echo Service = ${each.key}"
+  }
+}
+
+########################################
+# Matrix simulation
+########################################
+
+resource "null_resource" "matrix_combo" {
+  for_each = {
+    for combo in local.matrix : combo.id => combo
+  }
+
+  triggers = {
+    id  = each.value.id
+    env = each.value.env
+    svc = each.value.svc
+  }
+
+  provisioner "local-exec" {
+    command = "echo Matrix = ${each.value.id}"
+  }
+}
+
+########################################
+# Conditional resource
+########################################
+
+resource "null_resource" "conditional_extra" {
+  count = local.flags.enable_extra ? 2 : 0
+
+  triggers = {
+    name = "extra_${count.index}"
+  }
+
+  provisioner "local-exec" {
+    command = "echo Extra resource ${self.triggers.name}"
+  }
+}
+
+########################################
+# Simulate dependency
+########################################
+
+resource "null_resource" "finalizer" {
+  triggers = {
+    done = "true"
+  }
+
+  depends_on = [
+    null_resource.matrix_combo,
+    null_resource.conditional_extra
   ]
 
-  cat_lore = {
-    ballerina = "Cappuccina pirouette through dimensions"
-    sahur     = "Tung Tung Tung awaken the void"
-    bomber    = "Bombardiro Crocodilo strikes at dawn"
-    shark     = "Tralalero Tralala swims with static"
+  provisioner "local-exec" {
+    command = "echo All dummy setup complete"
   }
-
-  cat_stats = {
-    Whiskerina = {
-      agility = 99
-      chaos   = 88
-    }
-    Floppa = {
-      power = 9001
-      void  = 100
-    }
-  }
-
-  mixed_tuple = ["Whiskerina", 1337, true]
-  cat_set     = toset(["voidcat", "chaoscat", "cappuccinacat"])
-
-  null_val = null
-}
-
-output "all_cat_names" {
-  value = local.cat_names
-}
-
-output "ballerina_description" {
-  value = local.cat_lore["ballerina"]
-}
-
-output "sahur_cat_sound" {
-  value = local.cat_lore["sahur"]
-}
-
-output "bombardiro_cat" {
-  value = local.cat_lore["bomber"]
-}
-
-output "tralalero_cat" {
-  value = local.cat_lore["shark"]
-}
-
-output "cat_lore_keys" {
-  value = keys(local.cat_lore)
-}
-
-output "cat_lore_values" {
-  value = values(local.cat_lore)
-}
-
-output "floppa_power" {
-  value = local.cat_stats["Floppa"]["power"]
-}
-
-output "whiskerina_agility" {
-  value = local.cat_stats["Whiskerina"]["agility"]
-}
-
-output "mixed_tuple_example" {
-  value = local.mixed_tuple
-}
-
-output "cat_set_example" {
-  value = local.cat_set
-}
-
-output "joined_cat_names" {
-  value = join(" | ", local.cat_names)
-}
-
-output "first_cat_name" {
-  value = local.cat_names[0]
-}
-
-output "is_floppa_strong" {
-  value = local.cat_stats["Floppa"]["power"] > 5000
-}
-
-output "null_cat_check" {
-  value = local.null_val
-}
-
-output "upper_sahur" {
-  value = upper(local.cat_lore["sahur"])
-}
-
-output "replace_bombardiro" {
-  value = replace(local.cat_lore["bomber"], "dawn", "noon")
-}
-
-output "cat_name_length" {
-  value = length(local.cat_names)
-}
-
-output "cat_stats_object" {
-  value = local.cat_stats
-}
-
-output "contains_cappuccina" {
-  value = contains(local.cat_names, "Ballerina Cappuccina")
-}
-
-output "timestamp_now" {
-  value = timestamp()
-}
-
-output "cat_name_lengths" {
-  value = [for name in local.cat_names : length(name)]
-}
-
-output "cat_prefix_map" {
-  value = { for name in local.cat_names : name => "cat-${name}" }
-}
-
-output "map_example" {
-  value = {
-    name   = "Tung Cat"
-    origin = "Void Market"
-    sound  = "TUNG TUNG TUNG"
-  }
-}
-
-output "tuple_unpack" {
-  value = "Name: ${local.mixed_tuple[0]}, Code: ${local.mixed_tuple[1]}"
-}
-
-output "cat_object_example" {
-  value = {
-    ballerina = {
-      name   = "Cappuccina"
-      skill  = "pirouette"
-      danger = 99
-    }
-  }
-}
-
-output "flatten_example" {
-  value = flatten([[["cat1"]], ["cat2", "cat3"]])
-}
-
-output "ternary_check" {
-  value = contains(local.cat_names, "Floppa") ? "Floppa found" : "Floppa missing"
-}
-
-output "anomaly_cat_count" {
-  value = length(local.cat_lore)
 }
