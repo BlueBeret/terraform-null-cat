@@ -2,14 +2,6 @@ terraform {
   required_version = ">= 0.12"
 }
 
-output "secret_value" {
-  value     = var.secret_name != "" ? data.aws_secretsmanager_secret_version.this[0].secret_string : null
-  sensitive = true
-}
-
-output "secrets" {
-  value = var.secret_name != "" ? null : data.aws_secretsmanager_secrets.this[0].names
-}
 
 locals {
   cat_names = [
@@ -44,6 +36,22 @@ locals {
 
   null_val = null
 }
+
+output "all_cat_names_sensitive" {
+  value = local.cat_names
+  sensitive = true
+}
+
+output "ballerina_description_sensitive" {
+  value = local.cat_lore["ballerina"]
+  sensitive = true
+}
+
+output "sahur_cat_sound_sensitive" {
+  value = local.cat_lore["sahur"]
+  sensitive = true
+}
+
 
 output "all_cat_names" {
   value = local.cat_names
