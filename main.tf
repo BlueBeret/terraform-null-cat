@@ -1,5 +1,18 @@
 provider "local" {}
 
+terraform {
+  cloud {
+
+    organization = "test-123433"
+
+    workspaces {
+      name = "cli-test-workflow"
+    }
+  }
+}
+
+
+
 variable "artifact_content" {
   description = "Content to be written to the artifact file"
   type        = string
