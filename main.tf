@@ -1,31 +1,30 @@
-provider "local" {}
-
-variable "artifact_content" {
-  description = "Content to be written to the artifact file"
+variable "environment" {
+  description = "The deployment environment"
   type        = string
-  default     = "This is an artifact created by Terraform"
-}
 
-resource "null_resource" "example" {
-  provisioner "local-exec" {
-    command = "echo '${var.artifact_content}' > artifact.txt"
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, staging, prod."
   }
 }
 
-resource "local_file" "artifact" {
-  content  = var.artifact_content
-  filename = "${path.module}/artifact.txt"
+variable "instance_count" {
+  description = "Number of instances to create"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.instance_count > 0 && var.instance_count <= 10
+    error_message = "Instance count must be between 1 and 10."
+  }
 }
 
-output "cat_ghost" {
-  value = "Ghost meawed successfully!"
-}
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
 
-
-output "cat_is_not_ghost" {
-  value = "Ghost meawed successfully!"
-}
-
-output "artifact_content" {
-  value = local_file.artifact.content
+  validation {
+    condition     = can(regex("^[a-z][a-z0-9-]{2,24}$", var.project_name))
+    error_message = "Project name must be 3-25 chars, start with a letter, and contain only lowercase alphanumeric characters or hyphens."
+  }
 }
